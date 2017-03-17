@@ -83,5 +83,8 @@
     <ClInclude Include="inc\config_file_parser.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="inc\download_uploader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -186,6 +186,7 @@
   <ItemGroup>
     <ClInclude Include="inc\config_file_parser.h" />
     <ClInclude Include="inc\config_file.h" />
+    <ClInclude Include="inc\download_uploader.h" />
     <ClInclude Include="inc\easylogging++.h" />
     <ClInclude Include="inc\lauxlib.h" />
     <ClInclude Include="inc\lua.h" />

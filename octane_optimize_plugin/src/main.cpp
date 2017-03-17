@@ -41,6 +41,9 @@ extern "C" __declspec(dllexport) int luaopen_octane_optimize_plugin(lua_State* L
 	using octane_plug_utils::TraverseTable;
 	using octane_plug_utils::pair_print;
 
+    // 创建用于保存日志的目录
+    octane_plug_utils::CreateFolder("log");
+
 	// 初始化日志
     Easylogging_Setup();
 
