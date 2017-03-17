@@ -5,12 +5,15 @@
 #include <ostream>
 #include <sstream>
 #include <ctime>
+#include <chrono>
 
 #include "sol.hpp"
 #include "pugixml.hpp"
 #include "pugiconfig.hpp"
 #include "octane_lua_api.h"
 #include "easylogging++.h"
+
+constexpr int BUFSIZE = 1024;
 
 namespace octane_plug_utils {
 
@@ -193,7 +196,7 @@ namespace octane_plug_utils {
         }
     }
 
-    bool CreateFolder(const std::string& foldPath)
+    static bool CreateFolder(const std::string& foldPath)
     {
         if (foldPath.empty())
         {
@@ -228,4 +231,70 @@ namespace octane_plug_utils {
 
         return true;
     }
+
+
+    static BOOL GetDriverInfo(LPSTR szDrive, std::vector<std::string>& driverRootPaths)
+    {
+        UINT uDriverType;
+
+        uDriverType = GetDriveType(szDrive);
+
+        switch (uDriverType)
+        {
+        case DRIVE_UNKNOWN:
+            break;
+        case DRIVE_NO_ROOT_DIR:
+            break;
+        case DRIVE_REMOVABLE:
+            break;
+        case DRIVE_FIXED:
+            driverRootPaths.push_back(std::string(szDrive));
+            break;
+        case DRIVE_REMOTE:
+            break;
+        case DRIVE_CDROM:
+            break;
+        case DRIVE_RAMDISK:
+            break;
+        default:
+            break;
+        }
+
+        return TRUE;
+
+    }
+
+    static std::string find_first_available_driver()
+    {
+        CHAR szLogicDriveStrings[BUFSIZE];
+        PCHAR szDrive;
+
+        ZeroMemory(szLogicDriveStrings, BUFSIZE);
+
+        GetLogicalDriveStrings(BUFSIZE - 1, szLogicDriveStrings);
+        szDrive = (PCHAR)szLogicDriveStrings;
+        std::vector<std::string> diskDrivePaths{};
+        do
+        {
+            if (!GetDriverInfo(szDrive, diskDrivePaths))
+            {
+                printf("\nGet Volume Information Error:%d", GetLastError());
+            }
+            szDrive += (lstrlen(szDrive) + 1);
+        } while (*szDrive != '\x00');
+
+        if (!diskDrivePaths.empty())
+        {
+            return diskDrivePaths[0].c_str();
+        }
+
+        return "";
+    }
+
+    static std::string GetUTC()
+	{
+        auto timestamp = std::chrono::seconds(std::time(nullptr));
+        int seconds = std::chrono::seconds(timestamp).count();
+        return std::to_string(seconds);
+	}
 }

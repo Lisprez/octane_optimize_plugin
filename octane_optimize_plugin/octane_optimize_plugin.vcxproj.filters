@@ -33,36 +33,45 @@
     <ClCompile Include="src\config_file_parser.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\download_uploader.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\config_file.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\config_file_parser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Crypto.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\download_uploader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\easylogging++.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
     <ClInclude Include="inc\lauxlib.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="inc\lua.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="inc\lualib.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\easylogging++.h">
+    <ClInclude Include="inc\lua.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="inc\luaconf.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="inc\sol.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\lua.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="inc\luajit.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="inc\octane_lua_api.h">
+    <ClInclude Include="inc\lualib.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="inc\utils.h">
+    <ClInclude Include="inc\octane_lua_api.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="inc\pugiconfig.hpp">
@@ -71,19 +80,22 @@
     <ClInclude Include="inc\pugixml.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="inc\xml_rw.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="inc\scene_data.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="inc\config_file.h">
+    <ClInclude Include="inc\sol.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="inc\config_file_parser.h">
+    <ClInclude Include="inc\utils.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="inc\download_uploader.h">
+    <ClInclude Include="inc\xml_rw.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\curl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\json.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

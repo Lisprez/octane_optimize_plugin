@@ -111,7 +111,7 @@
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_WINDOWS;_USRDLL;OCTANE_OPTIMIZE_PLUGIN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_WINDOWS;_USRDLL;OCTANE_OPTIMIZE_PLUGIN_EXPORTS;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <SuppressStartupBanner>false</SuppressStartupBanner>
       <AdditionalIncludeDirectories>$(ProjectDir)inc;%(AdditionalIncludeDirectories</AdditionalIncludeDirectories>
@@ -120,7 +120,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)lib\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lua51.lib;libconfig++.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lua51.lib;libcurld.lib;crypto.lib;ws2_32.lib;wldap32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <BuildLog>
       <Path>$(SolutionDir)build\$(Platform)\$(Configuration)\BuildLog\$(MSBuildProjectName).log</Path>
@@ -176,6 +176,7 @@
   <ItemGroup>
     <ClCompile Include="src\config_file_parser.cpp" />
     <ClCompile Include="src\config_file.cpp" />
+    <ClCompile Include="src\download_uploader.cpp" />
     <ClCompile Include="src\main.cpp">
       <AdditionalIncludeDirectories>$(ProjectDir)inc;%(AdditionalIncludeDirectories</AdditionalIncludeDirectories>
     </ClCompile>
@@ -184,10 +185,13 @@
     <ClCompile Include="src\xml_rw.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="inc\config_file_parser.h" />
     <ClInclude Include="inc\config_file.h" />
+    <ClInclude Include="inc\config_file_parser.h" />
+    <ClInclude Include="inc\Crypto.h" />
+    <ClInclude Include="inc\curl.h" />
     <ClInclude Include="inc\download_uploader.h" />
     <ClInclude Include="inc\easylogging++.h" />
+    <ClInclude Include="inc\json.hpp" />
     <ClInclude Include="inc\lauxlib.h" />
     <ClInclude Include="inc\lua.h" />
     <ClInclude Include="inc\lua.hpp" />
