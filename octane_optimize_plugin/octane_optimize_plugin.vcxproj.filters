@@ -36,6 +36,39 @@
     <ClCompile Include="src\download_uploader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\compress.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\decompress.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\messanger.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common_types.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base64.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\crc32.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\md5.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sha1.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sha3.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sha256.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main_window.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\config_file.h">
@@ -96,6 +129,60 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="inc\json.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\compress.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\decompress.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\unzip.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\zconf.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\zip.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\zlib.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\messanger.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\common_types.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\base64.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\crc32.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\crypt.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\hash.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\hmac.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\md5.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\sha1.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\sha3.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\sha256.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\main_window.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

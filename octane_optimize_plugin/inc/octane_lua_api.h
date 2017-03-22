@@ -16,6 +16,7 @@ namespace octane_lua_api {
 		~OCtaneLuaAPI();
 		void Setup(sol::state_view* s);
 		sol::table operator [](const std::string& table_name) const;
+        sol::state_view Self() const;
 
 	private:
 		OCtaneLuaAPI();

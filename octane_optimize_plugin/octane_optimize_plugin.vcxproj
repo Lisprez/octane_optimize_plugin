@@ -120,11 +120,14 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)lib\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lua51.lib;libcurld.lib;crypto.lib;ws2_32.lib;wldap32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lua51.lib;libcurld.lib;crypto.lib;ws2_32.lib;wldap32.lib;zlibstaticd.lib;minizipd.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <BuildLog>
       <Path>$(SolutionDir)build\$(Platform)\$(Configuration)\BuildLog\$(MSBuildProjectName).log</Path>
     </BuildLog>
+    <PostBuildEvent>
+      <Command>copy "F:\work-dir\octane_optimize_plugin_cpp\octane_optimize_plugin\build\x64\Debug\octane_optimize_plugin.dll" "C:\Program Files\OTOY\OctaneRender Demo 2.25\octane_optimize_plugin.dll"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -174,23 +177,42 @@
     </BuildLog>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\base64.cpp" />
+    <ClCompile Include="src\common_types.cpp" />
+    <ClCompile Include="src\compress.cpp" />
     <ClCompile Include="src\config_file_parser.cpp" />
     <ClCompile Include="src\config_file.cpp" />
+    <ClCompile Include="src\crc32.cpp" />
+    <ClCompile Include="src\decompress.cpp" />
     <ClCompile Include="src\download_uploader.cpp" />
     <ClCompile Include="src\main.cpp">
       <AdditionalIncludeDirectories>$(ProjectDir)inc;%(AdditionalIncludeDirectories</AdditionalIncludeDirectories>
     </ClCompile>
+    <ClCompile Include="src\main_window.cpp" />
+    <ClCompile Include="src\md5.cpp" />
+    <ClCompile Include="src\messanger.cpp" />
     <ClCompile Include="src\octane_lua_api.cpp" />
     <ClCompile Include="src\pugixml.cpp" />
+    <ClCompile Include="src\sha1.cpp" />
+    <ClCompile Include="src\sha256.cpp" />
+    <ClCompile Include="src\sha3.cpp" />
     <ClCompile Include="src\xml_rw.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\base64.h" />
+    <ClInclude Include="inc\common_types.h" />
+    <ClInclude Include="inc\compress.hpp" />
     <ClInclude Include="inc\config_file.h" />
     <ClInclude Include="inc\config_file_parser.h" />
+    <ClInclude Include="inc\crc32.h" />
+    <ClInclude Include="inc\crypt.h" />
     <ClInclude Include="inc\Crypto.h" />
     <ClInclude Include="inc\curl.h" />
+    <ClInclude Include="inc\decompress.hpp" />
     <ClInclude Include="inc\download_uploader.h" />
     <ClInclude Include="inc\easylogging++.h" />
+    <ClInclude Include="inc\hash.h" />
+    <ClInclude Include="inc\hmac.h" />
     <ClInclude Include="inc\json.hpp" />
     <ClInclude Include="inc\lauxlib.h" />
     <ClInclude Include="inc\lua.h" />
@@ -198,13 +220,23 @@
     <ClInclude Include="inc\luaconf.h" />
     <ClInclude Include="inc\luajit.h" />
     <ClInclude Include="inc\lualib.h" />
+    <ClInclude Include="inc\main_window.h" />
+    <ClInclude Include="inc\md5.h" />
+    <ClInclude Include="inc\messanger.h" />
     <ClInclude Include="inc\octane_lua_api.h" />
     <ClInclude Include="inc\pugiconfig.hpp" />
     <ClInclude Include="inc\pugixml.hpp" />
     <ClInclude Include="inc\scene_data.h" />
+    <ClInclude Include="inc\sha1.h" />
+    <ClInclude Include="inc\sha256.h" />
+    <ClInclude Include="inc\sha3.h" />
     <ClInclude Include="inc\sol.hpp" />
+    <ClInclude Include="inc\unzip.h" />
     <ClInclude Include="inc\utils.h" />
     <ClInclude Include="inc\xml_rw.h" />
+    <ClInclude Include="inc\zconf.h" />
+    <ClInclude Include="inc\zip.h" />
+    <ClInclude Include="inc\zlib.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

@@ -28,3 +28,8 @@ sol::table octane_lua_api::OCtaneLuaAPI::operator [](const std::string& table_na
 {
 	return (*octane_lua_container_)[table_name];
 }
+
+sol::state_view octane_lua_api::OCtaneLuaAPI::Self() const
+{
+    return *octane_lua_container_;
+}
