@@ -6,6 +6,7 @@
 #include "octane_lua_api.h"
 #include "xml_rw.h"
 #include "utils.h"
+#include "config_file.h"
 
 namespace scene_data {
 	static int NODE_ID = 200;
@@ -41,12 +42,19 @@ namespace scene_data {
 	{
 		auto& octane_lua_api_instance = octane_lua_api::OCtaneLuaAPI::Get();
 		auto& xml_handler_instance = xml_rw::XMLHandler::Get();
+        config_file::ConfigFile& config_file_instance = config_file::ConfigFile::Get();
 
 		sol::object sceneGraph = octane_lua_api_instance["octane"]["project"]["getSceneGraph"]();
 		if (octane_plug_utils::CheckType(sceneGraph, sol::type::userdata))
 		{
-			//sol::table rootNodes = octane_lua_api_instance["octane"]["nodegraph"]["findItemsByName"](sceneGraph, "34344b5204a311e7befd00163e1284d1", false);
-			sol::table rootNodes = octane_lua_api_instance["octane"]["nodegraph"]["findItemsByName"](sceneGraph, "6f94f51608bd11e78f5700163e1284d1", false);
+            bool read_status;
+            std::string model_no;
+            std::tie(model_no, read_status) = config_file_instance.Read("model_no");
+            if (!read_status)
+            {
+                return;
+            }
+			sol::table rootNodes = octane_lua_api_instance["octane"]["nodegraph"]["findItemsByName"](sceneGraph, model_no, false);
 			if (!octane_plug_utils::CheckType(rootNodes, sol::type::table))
 			{
 				LOG(INFO) << "Error with findItemsByName";
@@ -71,7 +79,7 @@ namespace scene_data {
 
 			std::string root_node = xml_handler_instance.InsertRootNode("OCS2/graph", "node", nullptr, root_node_attributes_xml);
 			// 获取root_node下面的所有属性结点并插入
-			std::vector<std::string> all_attribute_names{ "filename", "objectLayerImport", "scaleUnitType",
+			std::vector<std::string> all_attribute_names{"objectLayerImport", "scaleUnitType",
 				"useSuppliedVertexNormals", "maxSmoothAngle", "defaultHairThickness",
 				"subdLevel", "subdLevel", "subdBoundInterp", "subdFaceVaryingBoundInterp",
 				"subdFaceVaryingPropagateCorners", "subdScheme", "windingOrder", "useSuppliedSmoothGroupsAsBoundaries",
@@ -88,6 +96,8 @@ namespace scene_data {
 				auto pcdata = std::get<1>(root_attribute_unit);
 				xml_handler_instance.InsertAttributeNode(root_node, nullptr, attribute_head, pcdata);
 			}
+            std::map<std::string, std::string> special_obj_attribute_node{{"name", "filename"}, {"type", "11"}};
+            xml_handler_instance.InsertAttributeNode(root_node, nullptr, special_obj_attribute_node, "item.obj");
 
 			//获取当前node的pin的数量
 			//遍历处理每一个pin, get_pin_node_data(pin)
@@ -130,9 +140,11 @@ namespace scene_data {
 
 	/**
 	 * 将lua值平整到C++中的相应的表示
-	 * @attribute_type: 属性值的类型, 比如type="4"就要进行特殊处理
-	 * @value: 要平整的lua值
-	 * 返回对就lua值的在C++中的字符串表示
+     *
+	 * @param attribute_type 属性值的类型, 比如type="4"就要进行特殊处理
+	 * @param value 要平整的lua值
+	 * 
+	 * @return std::string 返回对就lua值的在C++中的字符串表示
 	 */
 	static std::string flat_value(const std::string& attribute_type, const sol::object& value)
 	{
@@ -189,10 +201,12 @@ namespace scene_data {
 
 	/**
 	 * 获取非根结点的一般node结点的属性
-	 * @common_node: node在lua中的结点实体表示
-	 * @node_id: 通过全局变量指定的node的id
-	 * @node_is_pin_owned: 指示这个node是独立结点, 还是被pin持有的结点
-	 * 返回非根结点的结点的属性
+	 * 
+	 * @param common_node node在lua中的结点实体表示
+	 * @param node_id 通过全局变量指定的node的id
+	 * @param node_is_pin_owned 指示这个node是独立结点, 还是被pin持有的结点
+	 * 
+	 * @return std::map<std::string, std::string> 返回非根结点的结点的属性
 	 */
 	static std::map<std::string, std::string> get_common_node_attribute_data(sol::object common_node, const std::string& node_id, bool node_is_pin_owned)
 	{
@@ -217,9 +231,11 @@ namespace scene_data {
 
 	/**
 	 * 获取pin结点的属性值
-	 * @father_node: 这个pin所在的父结点在Lua的实体表示
-	 * @pin_index: 这个pin的索引, 比如2表示这个pin在父结点上的编号是2, 编号是从1开始的
-	 * 返回({"属性名", "属性值"}, 父结点, 是否是dynamic, pin连接的node的id)
+	 * 
+	 * @param father_node 这个pin所在的父结点在Lua的实体表示
+	 * @param pin_index 这个pin的索引, 比如2表示这个pin在父结点上的编号是2, 编号是从1开始的
+	 * 
+	 * @return 返回({"属性名", "属性值"}, 父结点, 是否是dynamic, pin连接的node的id)
 	 */
 	static std::tuple<std::map<std::string, std::string>, sol::object, bool, int> get_pin_node_data(sol::object father_node, int pin_index)
 	{
@@ -258,10 +274,12 @@ namespace scene_data {
 
 	/**
 	 * 插入一个普通结点到xml中去
-	 * @path: 被插入位置的父结点的路径
-	 * @diff_pair: 唯一确定父结点的键值对
-	 * @common_node_data: 普通结点的属性值
-	 * 返回新插入结点的路径
+	 * 
+	 * @param path 被插入位置的父结点的路径
+	 * @param diff_pair 唯一确定父结点的键值对
+	 * @param common_node_data 普通结点的属性值
+	 * 
+	 * @return std::string 返回新插入结点的路径
 	 */
 	static std::string insert_common_node(const std::string& path, const std::pair<std::string, std::string>* diff_pair, const std::map<std::string, std::string>& common_node_data)
 	{
@@ -271,10 +289,12 @@ namespace scene_data {
 
 	/**
 	 * 将一个pin插入到xml中
-	 * @path: 这个pin插入的路径
-	 * @father_node: 这个pin的父结点
-	 * @pin_index: 这个pin在父结点中的编号
-	 * 函数无返回值
+	 * 
+	 * @param path 这个pin插入的路径
+	 * @param father_node 这个pin的父结点
+	 * @param pin_index 这个pin在父结点中的编号
+	 * 
+	 * @return 函数无返回值
 	 */
 	static void insert_pin(const std::string& path, sol::object father_node, std::pair<std::string, std::string>* diff_pair, int pin_index)
 	{
@@ -324,11 +344,109 @@ namespace scene_data {
 		}
 	}
 
+    static bool is_file_belong_to(const std::string& fullPathFileName, const std::string& fullPathDirName)
+	{
+        std::string parent_path = octane_plug_utils::get_parent_path(fullPathFileName);
+        if (parent_path.compare(fullPathDirName) == 0) //表示文件的父目录和期望目录相同, 也就是文件在所指目录中
+        {
+            return true;
+        }
+        return false;
+	}
+
+    /**
+     * 这个函数的作用是从maps目录中找到图片序号最大的数值
+     * 
+     * @param maps_folder maps目录的绝对路径
+     * 
+     * @return int
+     */
+    static int get_image_index_max(const std::string& maps_folder)
+	{
+        std::vector<std::string> file_name_lists{};
+        octane_plug_utils::GetAllFilesPath(maps_folder, file_name_lists);
+        int max_order = 0;
+        for (const auto& full_path_file_name: file_name_lists)
+        {
+            std::string file_name = octane_plug_utils::get_file_name_from_fullpath(full_path_file_name);
+            std::string ext_name = octane_plug_utils::get_file_ext_with_dot(file_name);
+
+            size_t index = file_name.find_last_of('_');
+            if (index == std::string::npos)
+            {
+                continue;
+            }
+            int order = std::stoi(file_name.substr(index + 1, file_name.length()-ext_name.length()));
+            if (order > max_order)
+            {
+                max_order = order;
+            }
+        }
+
+        return max_order;
+	}
+
+    /**
+     * 修改贴图的路径
+     * 
+     * @param imageFullPathName 贴图的绝对路径
+     * 
+     * @return std::string 返回贴图的相对路径用于填写到ocs文件中
+     */
+    static std::string change_image_file_path(const std::string& imageFullPathName)
+	{
+        octane_lua_api::OCtaneLuaAPI& octane_lua_api_instance = octane_lua_api::OCtaneLuaAPI::Get();
+        config_file::ConfigFile& config_file_instance = config_file::ConfigFile::Get();
+        bool read_status;
+        std::string last_extract_folder;
+        std::tie(last_extract_folder, read_status) = config_file_instance.Read("LastExtractFolderPath");
+        if (!read_status)
+        {
+            octane_lua_api_instance["octane"]["gui"]["showError"]("Read last extract folder error!", "Read Config Error");
+        }
+        std::string map_folder1 = last_extract_folder + "\\maps"; //之所以存在这个是因为服务器失败的设计
+        std::string map_folder2 = last_extract_folder + "\\octane\\maps";
+        std::string map_folder;
+        if (octane_plug_utils::IsDirExist(map_folder2))
+        {
+            map_folder = map_folder2;
+        }
+        else if (octane_plug_utils::IsDirExist(map_folder1))
+        {
+            map_folder = map_folder1;
+        }
+        else
+        {
+            map_folder = map_folder2;
+            octane_plug_utils::CreateFolder(map_folder2);
+        }
+
+        if (is_file_belong_to(imageFullPathName, map_folder))
+        {
+            std::string temp("maps\\");
+            return temp + octane_plug_utils::get_file_name_from_fullpath(imageFullPathName);
+        }
+        int order = get_image_index_max(map_folder) + 1;
+        std::string ext_name = octane_plug_utils::get_file_ext_with_dot(imageFullPathName);
+        std::string file_name;
+        file_name.append("image_").append(std::to_string(order)).append(ext_name);
+        std::string new_image_fullname = map_folder + "\\" + file_name;
+        if (octane_plug_utils::convert_image(imageFullPathName, new_image_fullname) == 0)
+        {
+            std::string temp("maps\\");
+            temp.append(file_name);
+            return temp;
+        }
+        return "";
+	}
+
 	/**
 	 * 获取一个普通结点的所有属性结点的数据
-	 * @father_node: 表示一个普通结点
-	 * @node_type: 表示这个普通结点的类型
-	 * 返回{ ({"属性名", "属性值"}, pcdata) }
+	 * 
+	 * @param father_node 表示一个普通结点
+	 * @param node_type 表示这个普通结点的类型
+	 * 
+	 * @return 返回{ ({"属性名", "属性值"}, pcdata) }
 	 */
 	static std::vector<std::tuple<std::map<std::string, std::string>, std::string>> get_attribute_node_data(sol::object father_node, const std::string& node_type)
 	{
@@ -344,6 +462,9 @@ namespace scene_data {
 			std::string filename = octane_lua_api_instance["octane"]["node"]["getAttribute"](father_node, "filename");
 			attribute_node_attribute.insert({ "name", "filename" });
 			attribute_node_attribute.insert({ "type", "11" });
+
+            //修改图片文件路径
+            filename = change_image_file_path(filename);
 			std::tuple<std::map<std::string, std::string>, std::string> attribute_unit(attribute_node_attribute, filename);
 			result.push_back(attribute_unit);
 		}

@@ -120,7 +120,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)lib\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lua51.lib;libcurld.lib;crypto.lib;ws2_32.lib;wldap32.lib;zlibstaticd.lib;minizipd.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lua51.lib;libcurld.lib;crypto.lib;ws2_32.lib;wldap32.lib;zlibstaticd.lib;minizipd.lib;wsock32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <BuildLog>
       <Path>$(SolutionDir)build\$(Platform)\$(Configuration)\BuildLog\$(MSBuildProjectName).log</Path>
@@ -191,11 +191,13 @@
     <ClCompile Include="src\main_window.cpp" />
     <ClCompile Include="src\md5.cpp" />
     <ClCompile Include="src\messanger.cpp" />
+    <ClCompile Include="src\modify_winidow.cpp" />
     <ClCompile Include="src\octane_lua_api.cpp" />
     <ClCompile Include="src\pugixml.cpp" />
     <ClCompile Include="src\sha1.cpp" />
     <ClCompile Include="src\sha256.cpp" />
     <ClCompile Include="src\sha3.cpp" />
+    <ClCompile Include="src\test_image_window.cpp" />
     <ClCompile Include="src\xml_rw.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -209,6 +211,7 @@
     <ClInclude Include="inc\Crypto.h" />
     <ClInclude Include="inc\curl.h" />
     <ClInclude Include="inc\decompress.hpp" />
+    <ClInclude Include="inc\defer.h" />
     <ClInclude Include="inc\download_uploader.h" />
     <ClInclude Include="inc\easylogging++.h" />
     <ClInclude Include="inc\hash.h" />
@@ -223,6 +226,7 @@
     <ClInclude Include="inc\main_window.h" />
     <ClInclude Include="inc\md5.h" />
     <ClInclude Include="inc\messanger.h" />
+    <ClInclude Include="inc\modify_window.h" />
     <ClInclude Include="inc\octane_lua_api.h" />
     <ClInclude Include="inc\pugiconfig.hpp" />
     <ClInclude Include="inc\pugixml.hpp" />
@@ -231,6 +235,7 @@
     <ClInclude Include="inc\sha256.h" />
     <ClInclude Include="inc\sha3.h" />
     <ClInclude Include="inc\sol.hpp" />
+    <ClInclude Include="inc\test_image_window.h" />
     <ClInclude Include="inc\unzip.h" />
     <ClInclude Include="inc\utils.h" />
     <ClInclude Include="inc\xml_rw.h" />

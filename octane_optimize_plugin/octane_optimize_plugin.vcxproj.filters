@@ -69,6 +69,12 @@
     <ClCompile Include="src\main_window.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\modify_winidow.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\test_image_window.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\config_file.h">
@@ -183,6 +189,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="inc\main_window.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\modify_window.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\test_image_window.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\defer.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

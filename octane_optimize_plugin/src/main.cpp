@@ -15,6 +15,8 @@
 
 #include "easylogging++.h"
 #include "main_window.h"
+#include "modify_window.h"
+#include "test_image_window.h"
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -54,16 +56,6 @@ extern "C" __declspec(dllexport) int luaopen_octane_optimize_plugin(lua_State* L
     octane_lua_api::OCtaneLuaAPI& octane_lua_api_instance = octane_lua_api::OCtaneLuaAPI::Get();
     octane_lua_api_instance.Setup(octane_lua_container);
 
-    xml_rw::XMLHandler& xml_handler_instance = xml_rw::XMLHandler::Get();
-    xml_handler_instance.Init();
-    //获取场景结点数据, 并生成和插入到xml中
-    scene_data::get_scene_node_data();
-
-    //对根结点进行特殊的处理, 因为根结点要保存特定的信息
-    scene_data::get_root_node_data();
-
-    // 保存最终的信息到文件中
-    xml_rw::XMLHandler::Get().SaveFile("fuck_test_save_file.ocs");
     config_file::ConfigFile& config_file_instance = config_file::ConfigFile::Get();
     config_file_instance.Setup(config_file_name);
     auto download_uploader_instance = new download_upload::DownloadUploader();

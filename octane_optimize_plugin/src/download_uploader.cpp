@@ -13,6 +13,7 @@
 #include "hmac.h"
 #include "sha1.h"
 #include "base64.h"
+#include "main_window.h"
 
 constexpr char* GET_ADDRESS = "http://model.fuwo.com/model/octane/get_address/";
 
@@ -102,7 +103,7 @@ std::string download_upload::DownloadUploader::get_octane_zip_file_url(const std
 
 bool download_upload::DownloadUploader::get_octane_zip_file(const std::string& url)
 {
-    std::string file_save_path = octane_plug_utils::find_first_available_driver() + "\\octane_plugin_download_folder\\" + model_no_;
+    std::string file_save_path = octane_plug_utils::find_first_available_driver() + "octane_plugin_download_folder\\" + model_no_;
     octane_plug_utils::CreateFolder(file_save_path);
     auto& config_file_instance = config_file::ConfigFile::Get();
     config_file_instance.Write("last_zip_save_folder", file_save_path);
@@ -152,6 +153,9 @@ common_types::LoadResult download_upload::DownloadUploader::DownloadFileFromOCS(
     {
         return common_types::LoadResult::download_failed;
     }
+    config_file::ConfigFile& config_file_instance = config_file::ConfigFile::Get();
+    config_file_instance.Write("model_no", model_no);
+
     return common_types::LoadResult::download_success;
 }
 
@@ -316,7 +320,6 @@ common_types::LoadResult download_upload::DownloadUploader::UploadFileToOCS(cons
 download_upload::DownloadUploader::DownloadUploader()
     : messanger_(new messanger::Messanger())
 {
-    
 }
 
 download_upload::DownloadUploader::~DownloadUploader()
@@ -344,9 +347,26 @@ std::string download_upload::DownloadUploader::GetTestImage(const std::string& u
     }
 }
 
+
+int download_upload::DownloadUploader::download_progress(void* clientp,
+    double dltotal,
+    double dlnow,
+    double ultotal,
+    double ulnow)
+{
+    octane_lua_api::OCtaneLuaAPI& octane_lua_api_instance = octane_lua_api::OCtaneLuaAPI::Get();
+    auto self = octane_lua_api_instance.Self();
+    self.create_named_table("download_progress", "value", self.create_table_with(
+        "process", dlnow/dltotal));
+    self["octane"]["gui"]["updateProperties"](progress_bar_, self["download_progress"]["value"]);
+    self["octane"]["gui"]["dispatchGuiEvents"](500);
+
+    return 0;
+}
+
 bool download_upload::DownloadUploader::download_file_from_static_url(const std::string& url, const std::string& localSavePath)
 {
-    FILE* my_zip_file = fopen(localSavePath.c_str(), "ab+");
+    FILE* my_zip_file = fopen(localSavePath.c_str(), "wb");
     if (!my_zip_file)
     {
         error_message_ = "create local file error!";
@@ -364,10 +384,29 @@ bool download_upload::DownloadUploader::download_file_from_static_url(const std:
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, my_zip_file);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_file);
+        curl_easy_setopt(curl, CURLOPT_NOPROGRESS, false);
+        curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, &download_upload::DownloadUploader::download_progress);
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
         try
         {
             res = curl_easy_perform(curl);
+            if (res != CURLE_OK)
+            {
+                fclose(my_zip_file);
+                curl_easy_cleanup(curl);
+                curl_global_cleanup();
+                return false;
+            }
+            long status_code = 0;
+            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status_code);
+            if (status_code != 200)
+            {
+                fclose(my_zip_file);
+                curl_easy_cleanup(curl);
+                curl_global_cleanup();
+                return false;
+            }
+
         }
         catch (std::exception& ex)
         {
@@ -381,4 +420,19 @@ bool download_upload::DownloadUploader::download_file_from_static_url(const std:
     error_message_ = "init the libcurl error!";
     fclose(my_zip_file);
     return false;
+}
+
+bool download_upload::DownloadUploader::InformUpdateModel(const std::string& model_no) const
+{
+    return messanger_->InformUpdateModel(model_no);
+}
+
+bool download_upload::DownloadUploader::InformCreateTask(const std::string& model_no) const
+{
+    return messanger_->InformCreateTask(model_no);
+}
+
+void download_upload::DownloadUploader::SetProgressBar(sol::table progressBar)
+{
+    progress_bar_ = progressBar;
 }

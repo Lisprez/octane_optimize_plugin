@@ -1,5 +1,15 @@
 #pragma once
 
+#include <Windows.h>
+#include <Shlwapi.h>
+#include <ShlObj.h>
+#include <locale.h>
+#include <cctype>
+#include <io.h>
+#include <stdio.h>
+#include <direct.h>  
+#include <stdlib.h>
+
 #include <functional>
 #include <string>
 #include <ostream>
@@ -16,12 +26,12 @@
 #include "unzip.h"
 #include "compress.hpp"
 #include "decompress.hpp"
-#include <io.h>
-#include <stdio.h>
-#include <direct.h>  
-#include <stdlib.h>
 
+#include <gdiplus.h>
 #include "easylogging++.h"
+
+#pragma comment(lib, "gdiplus.lib")
+#pragma comment(lib, "Shlwapi.lib")
 
 constexpr int BUFSIZE = 1024;
 
@@ -208,6 +218,21 @@ namespace octane_plug_utils {
         }
     }
 
+    static std::string get_parent_path(const std::string& folderPath)
+    {
+        std::string folder_path = preprocess(folderPath);
+        if (folder_path.empty())
+        {
+            return "";
+        }
+        size_t index = folder_path.find_last_of('\\');
+        if (index == std::string::npos)
+        {
+            return "";
+        }
+        return folder_path.substr(0, index);
+    }
+
     static bool CreateFolder(const std::string& foldPath)
     {
         if (foldPath.empty())
@@ -355,7 +380,7 @@ namespace octane_plug_utils {
         if (zipFile.open(src_file.c_str()))
         {
             std::string dir_name = src_file.substr(0, src_file.length() - 4);
-            if (_mkdir(dir_name.c_str()) == 0) 
+            if (_mkdir(dir_name.c_str()) != ENOENT) 
             {
                 auto filenames = zipFile.getFilenames();
                 for (auto it = filenames.begin(); it != filenames.end(); it++) 
@@ -559,5 +584,207 @@ namespace octane_plug_utils {
     static inline std::string& trim(std::string& s)
     {
         return ltrim(rtrim(s));
+    }
+
+    static inline int rename_file(const std::string& oldFullPathName, const std::string& newFullPathName)
+    {
+        return MoveFileEx(oldFullPathName.c_str(), newFullPathName.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED);
+    }
+
+    static BOOL ApplyFunctionToFile(const std::string& srcFolder,
+        std::map<std::string, std::string> modifyContent,
+        std::function<void(const std::string& filePath,
+            std::map<std::string, std::string>)> modifier)
+    {
+        WIN32_FIND_DATA FindFileData;
+        HANDLE hFind;
+        char l_szTmp[1025] = { 0 };
+        std::cout << srcFolder.c_str() << std::endl;
+        memcpy(l_szTmp, srcFolder.data(), srcFolder.size());
+
+
+        char l_szSrcPath[1025] = { 0 };
+        memcpy(l_szSrcPath, srcFolder.data(), srcFolder.size());
+
+        char l_szNewSrcPath[1025] = { 0 };
+
+        strcat(l_szTmp, "\\*");
+
+        hFind = FindFirstFile(l_szTmp, &FindFileData);
+
+        if (hFind == NULL || hFind == INVALID_HANDLE_VALUE)
+        {
+            return FALSE;
+        }
+
+        do
+        {
+            if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            {
+                if (strcmp(FindFileData.cFileName, "."))
+                {
+                    if (strcmp(FindFileData.cFileName, ".."))
+                    {
+                        printf("The Directory found is %s\n", FindFileData.cFileName);
+
+                        sprintf(l_szNewSrcPath, "%s\\%s", l_szSrcPath, FindFileData.cFileName);
+                        ApplyFunctionToFile(l_szNewSrcPath, modifyContent, modifier);
+                    }
+                }
+            }
+            else
+            {
+                printf("The File found is %s\n", FindFileData.cFileName);
+                char l_szSrcFile[1025] = { 0 };
+                char l_szDesFile[1025] = { 0 };
+                sprintf(l_szSrcFile, "%s\\%s", l_szSrcPath, FindFileData.cFileName);
+                modifier(l_szSrcFile, modifyContent);
+            }
+        } while (FindNextFile(hFind, &FindFileData));
+
+        FindClose(hFind);
+        return TRUE;
+    }
+
+    static std::string get_file_name_from_fullpath(const std::string& fullPathName)
+    {
+        if (fullPathName.empty())
+        {
+            return "";
+        }
+        std::string formal_path = preprocess(fullPathName);
+        size_t index = formal_path.find_last_of('\\');
+        if (index == std::string::npos)
+        {
+            return "";
+        }
+        return formal_path.substr(index + 1);
+    }
+
+    static std::string get_file_ext_with_dot(const std::string& fileName)
+    {
+        if (fileName.empty())
+        {
+            return "";
+        }
+        size_t index = fileName.find_last_of('.');
+        if (index == std::string::npos)
+        {
+            return "";
+        }
+        return fileName.substr(index);
+    }
+
+    static std::map<std::wstring, std::wstring> MimeTypeMap{
+        { L".jpeg", L"image/jpeg" },
+        { L".jpe", L"image/jpeg" },
+        { L".jpg", L"image/jpeg" },
+        { L".png", L"image/png" },
+        { L".gif", L"image/gif" },
+        { L".tiff", L"image/tiff" },
+        { L".tif", L"image/tiff" },
+        { L".bmp", L"image/bmp" }
+    };
+
+
+    static Gdiplus::Bitmap* ResizeClone(Gdiplus::Bitmap* bmp, int width, int height)
+    {
+        UINT image_height = bmp->GetHeight();
+        UINT image_width = bmp->GetWidth();
+        UINT target_height = 0;
+        UINT target_width = 0;
+
+        double ratio = static_cast<double>(image_height) / static_cast<double>(image_width);
+        if (image_height > image_width)
+        {
+            target_height = 1024;
+            target_width = static_cast<UINT>(static_cast<double>(1024) / ratio);
+        }
+        else
+        {
+            target_width = 1024;
+            target_height = static_cast<UINT>(static_cast<double>(target_width) * ratio);
+        }
+        Gdiplus::Bitmap* new_bmp = new Gdiplus::Bitmap(target_width, target_height, bmp->GetPixelFormat());
+        Gdiplus::Graphics graphics(new_bmp);
+        graphics.DrawImage(bmp, 0, 0, target_width, target_height);
+
+        return new_bmp;
+    }
+
+    static int GetGdiplusEncoder(const std::wstring& form, CLSID* clsid)
+    {
+        UINT num;
+        UINT size;
+        Gdiplus::ImageCodecInfo* imageCodecInfo = nullptr;
+        Gdiplus::GetImageEncodersSize(&num, &size);
+        if (size == 0)
+        {
+            return -1;
+        }
+        imageCodecInfo = static_cast<Gdiplus::ImageCodecInfo*>(malloc(size));
+        if (imageCodecInfo == nullptr)
+        {
+            return -1;
+        }
+        Gdiplus::GetImageEncoders(num, size, imageCodecInfo);
+
+        for (auto i = 0; i < num; i++)
+        {
+            if (wcscmp(imageCodecInfo[i].MimeType, form.c_str()) == 0)
+            {
+                *clsid = imageCodecInfo[i].Clsid;
+                return i;
+            }
+        }
+        free(imageCodecInfo);
+
+        return -1;
+    }
+
+    static int convert_image(const std::string& source_file_path, const std::string& target_file_path)
+    {
+        ULONG_PTR gdiplusToken;
+        Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+        Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+        std::wstring image_file_name;
+        image_file_name.assign(source_file_path.begin(), source_file_path.end());
+        std::wstring target_image_file_name;
+        target_image_file_name.assign(target_file_path.begin(), target_file_path.end());
+        Gdiplus::Bitmap* bmp = new Gdiplus::Bitmap(image_file_name.c_str());
+        if (bmp->GetHeight() <= 1024 && bmp->GetWidth() <= 1024)
+        {
+            LOG(INFO) << "Image is small not to process.";
+            if (CopyFileA(source_file_path.c_str(), target_file_path.c_str(), FALSE) == 0)
+            {
+                LOG(INFO) << "Copy the source image error!";
+                delete bmp;
+                Gdiplus::GdiplusShutdown(gdiplusToken);
+                return -1;
+            }
+            delete bmp;
+            Gdiplus::GdiplusShutdown(gdiplusToken);
+
+            return 0;
+        }
+        Gdiplus::Bitmap* resized_bmp = ResizeClone(bmp, 0, 0);
+        LPWSTR ext = PathFindExtensionW(image_file_name.c_str());
+        std::wstring form = MimeTypeMap[ext];
+        CLSID encId;
+        if (GetGdiplusEncoder(form, &encId) > -1)
+        {
+            resized_bmp->Save(target_image_file_name.c_str(), &encId, nullptr);
+        }
+        else
+        {
+            return -1;
+        }
+
+        delete bmp;
+        delete resized_bmp;
+        Gdiplus::GdiplusShutdown(gdiplusToken);
+
+        return 0;
     }
 }

@@ -181,7 +181,7 @@ bool messanger::Messanger::send_message(const std::string& model_no,
         {
 
             // 设置超时时间为1秒  
-            curl_easy_setopt(pCurl, CURLOPT_TIMEOUT, 5);
+            curl_easy_setopt(pCurl, CURLOPT_TIMEOUT, 3000);
 
             // First set the URL that is about to receive our POST.   
             // This URL can just as well be a   
