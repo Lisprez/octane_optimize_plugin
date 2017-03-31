@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <thread>
+#include <future>
 
 #include "curl.h"
 #include "download_uploader.h"
@@ -14,6 +15,15 @@
 #include "sha1.h"
 #include "base64.h"
 #include "main_window.h"
+
+// 全局变量, 用于标志当前工作线程的工作进度
+std::atomic<int> worker_state{ 0 };
+
+// 全局变量, 用于表示当前线程的任务是否执行完成
+std::atomic<bool> work_finished{ false };
+
+// 全局变量, 用于表示当前下载的进度情况
+std::atomic<int> process_value{ 0 };
 
 constexpr char* GET_ADDRESS = "http://model.fuwo.com/model/octane/get_address/";
 
@@ -40,7 +50,7 @@ std::string download_upload::DownloadUploader::get_octane_zip_file_url(const std
 
     common_types::HttpResonseBuff http_response;
     init_http_response_buf(&http_response);
-    
+
     try
     {
         CURL* curl = nullptr;
@@ -93,7 +103,7 @@ std::string download_upload::DownloadUploader::get_octane_zip_file_url(const std
         }
         curl_global_cleanup();
     }
-    catch(std::exception& ex)
+    catch (std::exception& ex)
     {
     }
 
@@ -108,12 +118,43 @@ bool download_upload::DownloadUploader::get_octane_zip_file(const std::string& u
     auto& config_file_instance = config_file::ConfigFile::Get();
     config_file_instance.Write("last_zip_save_folder", file_save_path);
     std::string zip_file_name = file_save_path + "\\" + model_no_ + ".zip";
-    if (download_file_from_static_url(url, zip_file_name))
+    //在这里需要开一个线程来跑下载的任务
+    //以便主线程可以接收数据刷新进度条
+    work_finished.store(false);
+
+    std::packaged_task<bool(const std::string&, const std::string&)> task([this](const std::string& url, const std::string& zip_file_name) {
+        if (download_file_from_static_url(url, zip_file_name))
+        {
+            LastStoredFileFullPathName = zip_file_name;
+            return true;
+        }
+        return false;
+    });
+    std::future<bool> download_result = task.get_future();
+    std::thread worker(std::move(task), url, zip_file_name);
+
+    octane_lua_api::OCtaneLuaAPI& octane_lua_api_instance = octane_lua_api::OCtaneLuaAPI::Get();
+    auto self = octane_lua_api_instance.Self();
+
+    while (!work_finished.load())
     {
-        LastStoredFileFullPathName = zip_file_name;
-        return true;
+        self.create_named_table("progress", "value", self.create_table_with(
+            "progress", process_value.load()/10.0));
+        octane_lua_api_instance["octane"]["gui"]["updateProperties"](progress_bar_, self["progress"]["value"]);
+        octane_lua_api_instance["octane"]["gui"]["dispatchGuiEvents"](100);
     }
-    return false;
+    worker.join();
+    bool result = false;
+    try
+    {
+        result = download_result.get();
+    }
+    catch(std::exception& ex)
+    {
+        error_message_ = "download thread exception";
+    }
+
+    return result;
 }
 
 common_types::LoadResult download_upload::DownloadUploader::DownloadFileFromOCS(const std::string& model_no)
@@ -233,6 +274,17 @@ static size_t read_callback(void *ptr, size_t size, size_t nmemb, FILE* stream)
     return retcode;
 }
 
+static int upload_progress(void* clientp,
+    double dltotal,
+    double dlnow,
+    double ultotal,
+    double ulnow)
+{
+    process_value.store(static_cast<int>(ulnow / ultotal * 10));
+
+    return 0;
+}
+
 common_types::LoadResult download_upload::DownloadUploader::UploadFileToOCS(const std::string& model_no,
     const std::string& oss_path,
     const std::string& fullPathFilename)
@@ -251,6 +303,7 @@ common_types::LoadResult download_upload::DownloadUploader::UploadFileToOCS(cons
     if (id.empty() || key.empty() || bucket_name.empty())
     {
         error_message_ = messanger_->GetError();
+        work_finished.store(true);
         return common_types::LoadResult::upload_failed;
     }
 
@@ -293,6 +346,8 @@ common_types::LoadResult download_upload::DownloadUploader::UploadFileToOCS(cons
         curl_easy_setopt(curl, CURLOPT_READDATA, hd_src);
         curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE,
             (curl_off_t)file_info.st_size);
+        curl_easy_setopt(curl, CURLOPT_NOPROGRESS, false);
+        curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, upload_progress);
         res = curl_easy_perform(curl);
         if (res != CURLE_OK)
         {
@@ -300,6 +355,7 @@ common_types::LoadResult download_upload::DownloadUploader::UploadFileToOCS(cons
             //fprintf(stderr, "curl_easy_perform() failed: %s\n",
                 //curl_easy_strerror(res));
             error_message_ = curl_easy_strerror(res);
+            work_finished.store(true);
             return common_types::LoadResult::upload_failed;
         }
         curl_easy_cleanup(curl);
@@ -307,12 +363,13 @@ common_types::LoadResult download_upload::DownloadUploader::UploadFileToOCS(cons
     else
     {
         error_message_ = "init libcurl for upload error!";
+        work_finished.store(true);
         return common_types::LoadResult::upload_failed;
     }
 
     fclose(hd_src);
     curl_global_cleanup();
-
+    work_finished.store(true);
     return common_types::LoadResult::upload_success;
 }
 
@@ -348,21 +405,17 @@ std::string download_upload::DownloadUploader::GetTestImage(const std::string& u
 }
 
 
-int download_upload::DownloadUploader::download_progress(void* clientp,
+static int download_progress(void* clientp,
     double dltotal,
     double dlnow,
     double ultotal,
     double ulnow)
 {
-    octane_lua_api::OCtaneLuaAPI& octane_lua_api_instance = octane_lua_api::OCtaneLuaAPI::Get();
-    auto self = octane_lua_api_instance.Self();
-    self.create_named_table("download_progress", "value", self.create_table_with(
-        "process", dlnow/dltotal));
-    self["octane"]["gui"]["updateProperties"](progress_bar_, self["download_progress"]["value"]);
-    self["octane"]["gui"]["dispatchGuiEvents"](500);
+    process_value.store(static_cast<int>(dlnow / dltotal * 10));
 
     return 0;
 }
+
 
 bool download_upload::DownloadUploader::download_file_from_static_url(const std::string& url, const std::string& localSavePath)
 {
@@ -370,6 +423,7 @@ bool download_upload::DownloadUploader::download_file_from_static_url(const std:
     if (!my_zip_file)
     {
         error_message_ = "create local file error!";
+        work_finished.store(true);
         return false;
     }
 
@@ -385,7 +439,7 @@ bool download_upload::DownloadUploader::download_file_from_static_url(const std:
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, my_zip_file);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_file);
         curl_easy_setopt(curl, CURLOPT_NOPROGRESS, false);
-        curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, &download_upload::DownloadUploader::download_progress);
+        curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, download_progress);
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
         try
         {
@@ -395,6 +449,7 @@ bool download_upload::DownloadUploader::download_file_from_static_url(const std:
                 fclose(my_zip_file);
                 curl_easy_cleanup(curl);
                 curl_global_cleanup();
+                work_finished.store(true);
                 return false;
             }
             long status_code = 0;
@@ -404,6 +459,7 @@ bool download_upload::DownloadUploader::download_file_from_static_url(const std:
                 fclose(my_zip_file);
                 curl_easy_cleanup(curl);
                 curl_global_cleanup();
+                work_finished.store(true);
                 return false;
             }
 
@@ -412,13 +468,16 @@ bool download_upload::DownloadUploader::download_file_from_static_url(const std:
         {
             error_message_ = "network connection error!";
             fclose(my_zip_file);
+            work_finished.store(true);
             return false;
         }
         fclose(my_zip_file);
+        work_finished.store(true);
         return true;
     }
     error_message_ = "init the libcurl error!";
     fclose(my_zip_file);
+    work_finished.store(true);
     return false;
 }
 

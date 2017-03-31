@@ -26,16 +26,6 @@ namespace download_upload {
         std::string LastStoredFileFullPathName;
     private:
         std::string get_octane_zip_file_url(const std::string& model_no);
-        int download_progress(void* clientp,
-            double dltotal,
-            double dlnow,
-            double ultotal,
-            double ulnow);
-        int upload_progress(void* clientp,
-            double dltotal,
-            double dlnow,
-            double ultotal,
-            double ulnow);
         bool get_octane_zip_file(const std::string& url);
         bool download_file_from_static_url(const std::string& url, const std::string& localSavePath);
         std::string url;

@@ -1,3 +1,6 @@
+#include <thread>
+#include <future>
+
 #include "main_window.h"
 #include "sol.hpp"
 #include "octane_lua_api.h"
@@ -8,6 +11,9 @@
 #include "modify_window.h"
 #include "test_image_window.h"
 #include "defer.h"
+
+extern std::atomic<int> process_value;
+extern std::atomic<bool> work_finished;
 
 //void gui::MainWindow::ShowWindow()
 gui::MainWindow::MainWindow()
@@ -167,7 +173,7 @@ void gui::MainWindow::download_button_callback(sol::object component, sol::objec
     config_file::ConfigFile& config_file_instance = config_file::ConfigFile::Get();
     octane_lua_api::OCtaneLuaAPI& octane_lua_api_instance = octane_lua_api::OCtaneLuaAPI::Get();
     auto self = octane_lua_api_instance.Self();
-    
+
     //这里尝试通过Label来通知用户当前程序的状态
     self.create_named_table("program_current_job", "attr", self.create_table_with(
         "text", "start downloading ..."));
@@ -331,7 +337,29 @@ void gui::MainWindow::upload_button_callback(sol::object component, sol::object 
 
     std::string model_no = std::get<0>(model_no_wraper);
     std::string current_object_path = model_no + "/octane.zip";
-    if (download_uploader_->UploadFileToOCS(model_no, current_object_path, zip_file_path) == common_types::LoadResult::upload_success)
+
+    //下面要开一个线程用于上传文件到oss
+    //主线程更新进度
+    work_finished.store(false);
+
+    std::packaged_task<common_types::LoadResult(const std::string&, const std::string&, const std::string&)> task([this](const std::string& model_no,
+        const std::string& current_object_path,
+        const std::string& zip_file_path) {
+        return download_uploader_->UploadFileToOCS(model_no, current_object_path, zip_file_path);
+    });
+    std::future<common_types::LoadResult> upload_result = task.get_future();
+    std::thread worker(std::move(task), model_no, current_object_path, zip_file_path);
+
+    while (!work_finished.load())
+    {
+        self.create_named_table("progress", "value", self.create_table_with(
+            "progress", process_value.load() / 10.0));
+        octane_lua_api_instance["octane"]["gui"]["updateProperties"](progressbar_instance_, self["progress"]["value"]);
+        octane_lua_api_instance["octane"]["gui"]["dispatchGuiEvents"](100);
+    }
+    worker.join();
+
+    if (upload_result.get() == common_types::LoadResult::upload_success)
     {
         //表示上传成功, 下面要提醒更新模型
         if (!download_uploader_->InformUpdateModel(model_no))
@@ -400,4 +428,6 @@ void gui::MainWindow::upload_button_callback(sol::object component, sol::object 
 
         return;
     }
+
+    return;
 }
