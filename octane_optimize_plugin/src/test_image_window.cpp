@@ -31,7 +31,7 @@ test_image_window::TestImageWindow::TestImageWindow(const std::string& testImage
 
     self.create_named_table("give_up_button", "attr", self.create_table_with(
         "type", self["octane"]["gui"]["componentType"]["BUTTON"],
-        "text", "Give up",
+        "text", "No",
         "width", 50,
         "height", 20,
         "enable", true,
@@ -40,7 +40,7 @@ test_image_window::TestImageWindow::TestImageWindow(const std::string& testImage
 
     self.create_named_table("confirm_button", "attr", self.create_table_with(
         "type", self["octane"]["gui"]["componentType"]["BUTTON"],
-        "text", "Confirm",
+        "text", "Yes",
         "width", 50,
         "height", 20,
         "enable", true,

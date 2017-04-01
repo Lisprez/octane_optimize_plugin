@@ -735,7 +735,7 @@ namespace octane_plug_utils {
         }
         Gdiplus::GetImageEncoders(num, size, imageCodecInfo);
 
-        for (auto i = 0; i < num; i++)
+        for (UINT i = 0; i < num; i++)
         {
             if (wcscmp(imageCodecInfo[i].MimeType, form.c_str()) == 0)
             {

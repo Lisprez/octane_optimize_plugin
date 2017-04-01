@@ -463,8 +463,14 @@ void gui::MainWindow::upload_button_callback(sol::object component, sol::object 
         }
         else
         {
+            self.create_named_table("label_font_color", "attr", self.create_table_with(
+                1, 0,
+                2, 255,
+                3, 0,
+                4, 255));
             self.create_named_table("program_current_job", "attr", self.create_table_with(
-                "text", "work finished ..."));
+                "text", "Great Work Finished!",
+                "textColour", self["label_font_color"]["attr"]));
             self["octane"]["gui"]["updateProperties"](status_label_instance_, self["program_current_job"]["attr"]);
             self.create_named_table("progress_bar", "value", self.create_table_with(
                 "progress", 1));
