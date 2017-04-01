@@ -7,6 +7,8 @@
 #include "utils.h"
 #include "config_file.h"
 
+extern bool cancel_current_modify;
+
 modify_window::MaterialModifyWindow::MaterialModifyWindow()
 {
     octane_lua_api::OCtaneLuaAPI& octane_lua_api_instance = octane_lua_api::OCtaneLuaAPI::Get();
@@ -71,7 +73,7 @@ modify_window::MaterialModifyWindow::MaterialModifyWindow()
         "text", "cancel",
         "width", 50,
         "height", 20,
-        "enable", false,
+        "enable", true,
         "centre", true));
     cancel_button_instance_ = self["octane"]["gui"]["create"](self["cancel_button"]["attr"]);
 
@@ -146,6 +148,15 @@ modify_window::MaterialModifyWindow::MaterialModifyWindow()
     self.create_named_table("ok_button_callback", "table", self.create_table_with(
         "callback", self["ok_button_callback"]));
     self["octane"]["gui"]["updateProperties"](ok_button_instance_, self["ok_button_callback"]["table"]);
+
+    self.set_function("cancel_button_callback", [this](sol::object component, sol::object event) {
+        cancel_button_callback(component, event);
+    });
+
+    self.create_named_table("cancel_button_callback", "table", self.create_table_with(
+        "callback", self["cancel_button_callback"]));
+    self["octane"]["gui"]["updateProperties"](cancel_button_instance_, self["cancel_button_callback"]["table"]);
+    
 
     window_instance_ = self["octane"]["gui"]["create"](self["modify_window"]["attr"]);
 }
@@ -238,6 +249,18 @@ static void modify_content(const std::string& filePath, std::map<std::string, st
     }
 }
 
+static bool is_value_in_map(const std::map<std::string, std::string>& map, const std::string& val)
+{
+    for (const auto& e: map)
+    {
+        if (e.second == val)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 void modify_window::MaterialModifyWindow::ok_button_callback(sol::object component, sol::object event)
 {
     octane_lua_api::OCtaneLuaAPI& octane_lua_api_instance = octane_lua_api::OCtaneLuaAPI::Get();
@@ -259,9 +282,23 @@ void modify_window::MaterialModifyWindow::ok_button_callback(sol::object compone
         {
             continue;
         }
+        else if (is_value_in_map(old_new_pairs, editor_text))
+        {
+            octane_lua_api_instance["octane"]["gui"]["showError"]("Repeat material names!", "Repeat Names");
+            return;
+        }
+
         std::string lable_text = all_labels[index]["text"].get<std::string>();
         old_new_pairs.insert_or_assign(lable_text, editor_text);
     }
+
+    if (old_new_pairs.empty())
+    {
+        //如果没有内容修改直接退出
+        CloseWindow();
+        return;
+    }
+
     bool read_status;
     std::string last_extract_folder;
     std::tie(last_extract_folder, read_status) = config_file_instance.Read("LastExtractFolderPath");
@@ -275,3 +312,10 @@ void modify_window::MaterialModifyWindow::ok_button_callback(sol::object compone
 
     return;
 }
+
+void modify_window::MaterialModifyWindow::cancel_button_callback(sol::object component, sol::object event)
+{
+    cancel_current_modify = true;
+    CloseWindow();
+}
+

@@ -495,3 +495,8 @@ void download_upload::DownloadUploader::SetProgressBar(sol::table progressBar)
 {
     progress_bar_ = progressBar;
 }
+
+std::string download_upload::DownloadUploader::GetOssPath(const std::string& model_no) const
+{
+    return messanger_->GetOssPath(model_no);
+}

@@ -12,6 +12,9 @@
 #include "test_image_window.h"
 #include "defer.h"
 
+bool cancel_current_modify = false;
+bool give_up_work = false;
+
 extern std::atomic<int> process_value;
 extern std::atomic<bool> work_finished;
 
@@ -192,6 +195,11 @@ void gui::MainWindow::download_button_callback(sol::object component, sol::objec
         self.create_named_table("download_button", "status", self.create_table_with(
             "enable", true));
         octane_lua_api_instance["octane"]["gui"]["updateProperties"](download_button_instance_, self["download_button"]["status"]);
+
+        self.create_named_table("program_current_job", "attr", self.create_table_with(
+            "text", "error finished ..."));
+        self["octane"]["gui"]["updateProperties"](status_label_instance_, self["program_current_job"]["attr"]);
+        self["octane"]["gui"]["dispatchGuiEvents"](500);
         return;
     }
 
@@ -204,6 +212,11 @@ void gui::MainWindow::download_button_callback(sol::object component, sol::objec
     {
         octane_lua_api_instance["octane"]["gui"]["showError"]("Extract file error!", "Extract Error");
         CloseWindow();
+
+        self.create_named_table("program_current_job", "attr", self.create_table_with(
+            "text", "error finished ..."));
+        self["octane"]["gui"]["updateProperties"](status_label_instance_, self["program_current_job"]["attr"]);
+        self["octane"]["gui"]["dispatchGuiEvents"](500);
         return;
     }
 
@@ -217,7 +230,7 @@ void gui::MainWindow::download_button_callback(sol::object component, sol::objec
         config_file_instance.Write("LastExtractFolderPath", extract_dir);
         octane_lua_api_instance["octane"]["project"]["load"](extract_dir + "\\octane\\item.ocs");
     }
-    else if (octane_plug_utils::IsDirExist(extract_dir + "\\item.ocs"))
+    else if (octane_plug_utils::IsFileExists(extract_dir + "\\item.ocs"))
     {
         config_file_instance.Write("LastExtractFolderPath", extract_dir);
         octane_lua_api_instance["octane"]["project"]["load"](extract_dir + "\\item.ocs");
@@ -303,6 +316,21 @@ void gui::MainWindow::upload_button_callback(sol::object component, sol::object 
     modify_window::MaterialModifyWindow* modify_window = new modify_window::MaterialModifyWindow();
     modify_window->ShowWindow();
     delete modify_window;
+    if (cancel_current_modify)
+    {
+        self.create_named_table("program_current_job", "attr", self.create_table_with(
+            "text", "you stoped rename material ..."));
+        self["octane"]["gui"]["updateProperties"](status_label_instance_, self["program_current_job"]["attr"]);
+        self.create_named_table("upload_button", "status", self.create_table_with(
+            "enable", true));
+        octane_lua_api_instance["octane"]["gui"]["updateProperties"](upload_button_instance_, self["upload_button"]["status"]);
+        self["octane"]["gui"]["dispatchGuiEvents"](500);
+
+        cancel_current_modify = false; //复位变量
+
+        return;
+    }
+
     //这个函数他妈的根本就是设计的失败,服务端的失败
     octane_plug_utils::CreateAndMove(extract_dir, "octane");
 
@@ -337,6 +365,11 @@ void gui::MainWindow::upload_button_callback(sol::object component, sol::object 
 
     std::string model_no = std::get<0>(model_no_wraper);
     std::string current_object_path = model_no + "/octane.zip";
+    std::string gotted_oss_path = download_uploader_->GetOssPath(model_no);
+    if (!gotted_oss_path.empty())
+    {
+        current_object_path = gotted_oss_path + "/octane.zip";
+    }
 
     //下面要开一个线程用于上传文件到oss
     //主线程更新进度
@@ -419,11 +452,24 @@ void gui::MainWindow::upload_button_callback(sol::object component, sol::object 
         delete test_image_window;
         self.create_named_table("upload_button", "status", self.create_table_with(
             "enable", true));
-        octane_lua_api_instance["octane"]["gui"]["updateProperties"](upload_button_instance_, self["download_button"]["status"]);
-
-        self.create_named_table("program_current_job", "attr", self.create_table_with(
-            "text", "work finished ..."));
-        self["octane"]["gui"]["updateProperties"](status_label_instance_, self["program_current_job"]["attr"]);
+        octane_lua_api_instance["octane"]["gui"]["updateProperties"](upload_button_instance_, self["upload_button"]["status"]);
+        if (give_up_work)
+        {
+            self.create_named_table("program_current_job", "attr", self.create_table_with(
+                "text", "gived up all changes ..."));
+            self["octane"]["gui"]["updateProperties"](status_label_instance_, self["program_current_job"]["attr"]);
+            self.create_named_table("progress_bar", "value", self.create_table_with(
+                "progress", 1));
+        }
+        else
+        {
+            self.create_named_table("program_current_job", "attr", self.create_table_with(
+                "text", "work finished ..."));
+            self["octane"]["gui"]["updateProperties"](status_label_instance_, self["program_current_job"]["attr"]);
+            self.create_named_table("progress_bar", "value", self.create_table_with(
+                "progress", 1));
+            self["octane"]["gui"]["updateProperties"](progressbar_instance_, self["progress_bar"]["value"]);
+        }
         self["octane"]["gui"]["dispatchGuiEvents"](500);
 
         return;

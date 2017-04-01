@@ -1,6 +1,8 @@
 #include "test_image_window.h"
 #include "octane_lua_api.h"
 
+extern bool give_up_work;
+
 test_image_window::TestImageWindow::TestImageWindow(const std::string& testImagePath, const std::string& model_no)
   : download_uploader_(new download_upload::DownloadUploader()),
     model_no_(model_no)   
@@ -110,6 +112,8 @@ test_image_window::TestImageWindow::TestImageWindow(const std::string& testImage
     self.set_function("give_up_button_callback", [this](sol::object component, sol::object event) {
         give_up_button_callback(component, event);
     });
+    self.create_named_table("give_up_button_callback", "table", self.create_table_with(
+        "callback", self["give_up_button_callback"]));
 
     self["octane"]["gui"]["updateProperties"](confirm_button_instance_, self["confirm_button_callback"]["table"]);
     self["octane"]["gui"]["updateProperties"](give_up_button_instance_, self["give_up_button_callback"]["table"]);
@@ -141,12 +145,13 @@ void test_image_window::TestImageWindow::confirm_button_callback(sol::object com
         octane_lua_api_instance["octane"]["gui"]["showError"]("Inform create task error!", "Inform Create Error");
         return;
     }
-    return;
+    CloseWindow();
 }
 
 void test_image_window::TestImageWindow::give_up_button_callback(sol::object component, sol::object event)
 {
     octane_lua_api::OCtaneLuaAPI& octane_lua_api_instance = octane_lua_api::OCtaneLuaAPI::Get();
     octane_lua_api_instance["octane"]["gui"]["showError"]("Give up your midification!", "Give Up");
+    give_up_work = true;
     CloseWindow();
 }

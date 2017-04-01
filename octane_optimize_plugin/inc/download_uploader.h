@@ -18,6 +18,7 @@ namespace download_upload {
         common_types::LoadResult UploadFileToOCS(const std::string& model_no, const std::string& oss_path, const std::string& fullPathFileName);
         bool InformUpdateModel(const std::string& model_no) const;
         bool InformCreateTask(const std::string& model_no) const;
+        std::string GetOssPath(const std::string& model_no) const;
 
         std::string GetTestImage(const std::string& url);
 

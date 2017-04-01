@@ -189,6 +189,12 @@ namespace octane_plug_utils {
         }
     }
 
+    static bool IsFileExists(const std::string& filePath)
+    {
+        DWORD dwAttrib = GetFileAttributes(filePath.c_str());
+        return dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
+    }
+
     static bool IsDirExist(const std::string& directoryName)
     {
         DWORD file_type = GetFileAttributesA(directoryName.c_str());

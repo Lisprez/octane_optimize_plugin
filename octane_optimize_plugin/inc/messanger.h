@@ -10,6 +10,7 @@ namespace messanger {
         ~Messanger();
 
         common_types::TokenType GetToken(const std::string& model_no);
+        std::string GetOssPath(const std::string& model_no);
         std::string GetError() const;
         bool InformUpdateModel(const std::string& model_no);
         bool InformCreateTask(const std::string& model_no);

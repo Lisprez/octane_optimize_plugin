@@ -8,6 +8,7 @@
 constexpr char* GET_TOKEN = "http://model.fuwo.com/model/octane/get_token/";
 constexpr char* UPDATE_MODEL = "http://model.fuwo.com/model/octane/update_model/";
 constexpr char* CREATE_TASK = "http://model.fuwo.com/model/octane/create_task/";
+constexpr char* GET_OSS_PATH = "http://model.fuwo.com/model/storage/get_upload_address/";
 
 common_types::TokenType messanger::Messanger::GetToken(const std::string& model_no)
 {
@@ -309,3 +310,27 @@ bool messanger::Messanger::InformCreateTask(const std::string& model_no)
         }
     });
 }
+
+std::string messanger::Messanger::GetOssPath(const std::string& model_no)
+{
+    std::string oss_path;
+
+    bool send_result = send_message(model_no, GET_OSS_PATH, [this, &oss_path](const char* http_response_buf) {
+        using json = nlohmann::json;
+        auto jsonStructure = json::parse(http_response_buf);
+        std::cout << http_response_buf << std::endl;
+        if (jsonStructure["code"].get<std::string>() == "10000")
+        {
+            oss_path = jsonStructure["data"]["path"].get<std::string>();
+            return true;
+        }
+        return false;
+    });
+    
+    if (send_result)
+    {
+        return oss_path;
+    }
+    return "";
+}
+
