@@ -9,7 +9,7 @@
 
 extern bool cancel_current_modify;
 
-modify_window::MaterialModifyWindow::MaterialModifyWindow()
+modify_window::MaterialModifyWindow::MaterialModifyWindow(const std::vector<std::string>& materialNames)
 {
     octane_lua_api::OCtaneLuaAPI& octane_lua_api_instance = octane_lua_api::OCtaneLuaAPI::Get();
     auto self = octane_lua_api_instance.Self();
@@ -20,9 +20,9 @@ modify_window::MaterialModifyWindow::MaterialModifyWindow()
     self.create_named_table("group_children", "attr", self.create_table_with());
 
     //获取材质名称列表
-    std::vector<std::string> material_names{};
+    std::vector<std::string> material_names(materialNames);
 
-    sol::object scene_graph = octane_lua_api_instance["octane"]["project"]["getSceneGraph"]();
+    /*sol::object scene_graph = octane_lua_api_instance["octane"]["project"]["getSceneGraph"]();
     sol::table all_single_nodes = octane_lua_api_instance["octane"]["nodegraph"]["getOwnedItems"](scene_graph);
     if (all_single_nodes.empty())
     {
@@ -39,7 +39,7 @@ modify_window::MaterialModifyWindow::MaterialModifyWindow()
             std::string single_node_pin_name = single_node_pin_info["name"].get<std::string>();
             material_names.push_back(single_node_pin_name);
         }
-    }
+    }*/
 
     for (auto i = 0; i < material_names.size(); i++)
     {

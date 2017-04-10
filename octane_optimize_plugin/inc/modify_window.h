@@ -5,7 +5,7 @@ namespace modify_window {
 
     class MaterialModifyWindow {
     public:
-        MaterialModifyWindow();
+        MaterialModifyWindow(const std::vector<std::string>& materialNames);
         ~MaterialModifyWindow();
         MaterialModifyWindow(const MaterialModifyWindow&) = delete;
         MaterialModifyWindow& operator=(const MaterialModifyWindow&) = delete;

@@ -8,6 +8,8 @@
 #include "utils.h"
 #include "config_file.h"
 
+std::vector<std::string> material_names{};
+
 namespace scene_data {
 	static int NODE_ID = 200;
 	static long FAKE_PIN_ID = 10000;
@@ -248,7 +250,7 @@ namespace scene_data {
 		int pin_type = pin_info["type"].get<int>();
 		if (pin_type == 7) // 表示连接的是材质结点
 		{
-			
+			material_names.push_back(pin_name);
 		}
 		
 		pin_attributes.insert({ "name", pin_name });

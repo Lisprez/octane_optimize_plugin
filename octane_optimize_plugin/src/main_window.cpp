@@ -245,6 +245,11 @@ void gui::MainWindow::download_button_callback(sol::object component, sol::objec
 						<attr name='value' type='8'>20 0 0</attr>
 					</node>
 				</pin>
+				<pin name='aperture'>
+					<node id='13' type='6'>
+						<attr name='value' type='8'>0 0 0</attr>
+					</node>
+				</pin>
 			</node>
 		</pin>
 	</node>
@@ -345,9 +350,11 @@ void gui::MainWindow::upload_button_callback(sol::object component, sol::object 
     }
 
     //ÐÞ¸Ä²ÄÖÊÃû³Æ
-    modify_window::MaterialModifyWindow* modify_window = new modify_window::MaterialModifyWindow();
+    modify_window::MaterialModifyWindow* modify_window = new modify_window::MaterialModifyWindow(material_names);
     modify_window->ShowWindow();
     delete modify_window;
+	material_names.clear();
+
     if (cancel_current_modify)
     {
         self.create_named_table("program_current_job", "attr", self.create_table_with(

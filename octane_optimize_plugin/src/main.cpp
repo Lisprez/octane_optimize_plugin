@@ -9,7 +9,7 @@
 #include "utils.h"
 #include "octane_lua_api.h"
 #include "xml_rw.h"
-#include "scene_data.h"
+//#include "scene_data.h"
 #include "config_file.h"
 #include "download_uploader.h"
 
