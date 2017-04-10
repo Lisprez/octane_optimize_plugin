@@ -204,9 +204,9 @@ unsigned char* hexstr_to_char_array(const char* hexstr)
 {
     std::string hex_string(hexstr);
     std::string temp{};
-    int len = strlen(hexstr);
+    size_t len = strlen(hexstr);
     unsigned int n = 0;
-    int count = len / 2;
+    size_t count = len / 2;
 
     if (len % 2 != 0)
     {

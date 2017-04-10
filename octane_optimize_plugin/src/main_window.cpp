@@ -225,14 +225,46 @@ void gui::MainWindow::download_button_callback(sol::object component, sol::objec
     self["octane"]["gui"]["updateProperties"](status_label_instance_, self["program_current_job"]["attr"]);
     self["octane"]["gui"]["dispatchGuiEvents"](1000);
 
+	//FIXME: 通过这种方式来实现相机定位
+	const std::string camera_location_discriptor{R"(<graph id="100000" name="Project settings" type="4">
+	<node id="100001" name="Preview Render Target" position="0 0" type="56">
+		<pin name="camera">
+			<node id="100002" type="13">
+				<pin name="pos">
+					<node id="100003" type="6">
+						<attr name="value" type="8">0 5 7.5</attr>
+					</node>
+				</pin>
+				<pin name='target'>
+					<node id='22' type='6'>
+						<attr name='value' type='8'>0.0760132 0.645433 -0.0625794</attr>
+					</node>
+				</pin>
+				<pin name='focalDepth'>
+					<node id='17' type='6'>
+						<attr name='value' type='8'>20 0 0</attr>
+					</node>
+				</pin>
+			</node>
+		</pin>
+	</node>
+</graph>
+)"};
     if (octane_plug_utils::IsDirExist(extract_dir + "\\octane"))
     {
         config_file_instance.Write("LastExtractFolderPath", extract_dir);
+		if (!octane_plug_utils::IsFileExists(extract_dir + "\\octane\\item.ocs"))
+		{
+			octane_lua_api_instance["octane"]["gui"]["showError"]("item.ocs file not found in folder level 2!", "Error");
+			return;
+		}
+		octane_plug_utils::insert_content_to_file(extract_dir + "\\octane\\item.ocs", 3, camera_location_discriptor);
         octane_lua_api_instance["octane"]["project"]["load"](extract_dir + "\\octane\\item.ocs");
     }
     else if (octane_plug_utils::IsFileExists(extract_dir + "\\item.ocs"))
     {
         config_file_instance.Write("LastExtractFolderPath", extract_dir);
+		octane_plug_utils::insert_content_to_file(extract_dir + "\\octane\\item.ocs", 3, camera_location_discriptor);
         octane_lua_api_instance["octane"]["project"]["load"](extract_dir + "\\item.ocs");
     }
     else

@@ -793,4 +793,72 @@ namespace octane_plug_utils {
 
         return 0;
     }
+
+	static std::string get_file_content(const std::string& filePath)
+	{
+		std::FILE* fp = std::fopen(filePath.c_str(), "rb");
+		if (!fp)
+		{
+			throw(errno); //文件的内容可能为空,所以只能通过抛出异常的方式来告诉出现了错误
+		}
+
+		std::string content;
+		std::fseek(fp, 0, SEEK_END);
+		content.resize(std::ftell(fp));
+		std::rewind(fp);
+		std::fread(&content[0], 1, content.size(), fp);
+		std::fclose(fp);
+
+		return content;
+	}
+
+	static size_t get_line_head_index(const std::string& buf, int lineNo, const std::string& format)
+	{
+		size_t localtion = 0;
+		std::string deli;
+		if (format == "dos")
+		{
+			deli = "\r\n";
+		}
+		else if (format == "unix")
+		{
+			deli = "\n";
+		}
+		else if (format == "mac")
+		{
+			deli = "\r";
+		}
+
+		for (auto i = 0; i < lineNo - 1; i++)
+		{
+			auto index = buf.find(deli, localtion);
+			localtion = index + deli.length();
+		}
+
+		return localtion;
+	}
+
+	static void insert_content_to_file(const std::string& filePath, int line_no, const std::string& content)
+	{
+		std::string old_content;
+		try
+		{
+			old_content = get_file_content(filePath);
+		}
+		catch (const int& error)
+		{
+			//todo error operation		
+
+			return;
+		}
+
+		size_t third_line_location = get_line_head_index(old_content, line_no, "unix");
+		std::string head = old_content.substr(0, third_line_location);
+		std::string tail = old_content.substr(third_line_location);
+		std::ofstream fwstream(filePath, std::ios::out | std::ios::trunc);
+		fwstream << head;
+		fwstream << content;
+		fwstream << tail;
+		fwstream.close();
+	}
 }

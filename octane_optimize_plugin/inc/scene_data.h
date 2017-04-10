@@ -243,6 +243,14 @@ namespace scene_data {
 		sol::table pin_info = octane_lua_api_instance["octane"]["node"]["getPinInfoIx"](father_node, pin_index);
 		std::map<std::string, std::string> pin_attributes{};
 		std::string pin_name = pin_info["name"].get<std::string>();
+
+		//获取pin的类型用于收集是否是一个材质结点
+		int pin_type = pin_info["type"].get<int>();
+		if (pin_type == 7) // 表示连接的是材质结点
+		{
+			
+		}
+		
 		pin_attributes.insert({ "name", pin_name });
 		if (pin_info["isDynamic"].get<bool>())
 		{

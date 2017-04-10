@@ -8,7 +8,7 @@
 constexpr char* GET_TOKEN = "http://model.fuwo.com/model/octane/get_token/";
 constexpr char* UPDATE_MODEL = "http://model.fuwo.com/model/octane/update_model/";
 constexpr char* CREATE_TASK = "http://model.fuwo.com/model/octane/create_task/";
-constexpr char* GET_OSS_PATH = "http://model.fuwo.com/model/storage/get_upload_address/";
+constexpr char* GET_OSS_PATH = "http://model.fuwo.com/model/plugin/get_upload_address/";
 
 common_types::TokenType messanger::Messanger::GetToken(const std::string& model_no)
 {
