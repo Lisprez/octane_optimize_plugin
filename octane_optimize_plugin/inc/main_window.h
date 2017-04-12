@@ -1,6 +1,7 @@
 #pragma once
 #include "sol.hpp"
 #include "download_uploader.h"
+#include "material_library.h"
 
 namespace gui {
 
@@ -26,5 +27,6 @@ namespace gui {
         sol::table progressbar_instance_;
         sol::table status_label_instance_;
         download_upload::DownloadUploader* download_uploader_;
+		material::MaterialLibrary* material_library_;
     };
 }

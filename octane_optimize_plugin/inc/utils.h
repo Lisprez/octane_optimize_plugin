@@ -861,4 +861,11 @@ namespace octane_plug_utils {
 		fwstream << tail;
 		fwstream.close();
 	}
+
+	static std::string get_dll_path_from_itself()
+    {
+		char path[2048];
+		GetModuleFileNameA(nullptr, path, 2048);
+		return path;
+    }
 }

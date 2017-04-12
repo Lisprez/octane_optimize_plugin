@@ -20,7 +20,7 @@
 
 INITIALIZE_EASYLOGGINGPP
 
-constexpr char* config_file_name = "config_test.cfg";
+constexpr char* config_file_name = "octane_plugin.cfg";
 
 void Easylogging_Setup()
 {
@@ -48,6 +48,13 @@ extern "C" __declspec(dllexport) int luaopen_octane_optimize_plugin(lua_State* L
     // 创建用于保存日志的目录
     octane_plug_utils::CreateFolder("log");
 
+	// 创建用于保存下载模型文件的目录
+	std::string octane_download_folder = octane_plug_utils::find_first_available_driver() + "octane_plugin_download_folder";
+	if (!octane_plug_utils::IsDirExist(octane_download_folder))
+	{
+	    octane_plug_utils::CreateFolder(octane_download_folder);
+	}
+
     // 初始化日志
     Easylogging_Setup();
 
@@ -57,50 +64,9 @@ extern "C" __declspec(dllexport) int luaopen_octane_optimize_plugin(lua_State* L
     octane_lua_api_instance.Setup(octane_lua_container);
 
     config_file::ConfigFile& config_file_instance = config_file::ConfigFile::Get();
-    config_file_instance.Setup(config_file_name);
+    config_file_instance.Setup(octane_download_folder + "\\" + config_file_name);
     auto download_uploader_instance = new download_upload::DownloadUploader();
 
-    
-
-#if 0
-    if (download_uploader_instance->DownloadFileFromOCS("846675380d4911e7b9fa00163e1284d1") == common_types::LoadResult::download_failed)
-    {
-    //报告下载错误
-    //download_uploader_instance->error_message_
-        return 0;
-    }
-
-    auto extract_dir = octane_plug_utils::extract_zip_file(download_uploader_instance->LastStoredFileFullPathName);
-    if (extract_dir.empty())
-    {
-    //解压失败
-    }
-    if (octane_plug_utils::IsDirExist(extract_dir + "\\octane"))
-    {
-        config_file_instance.Write("LastExtractFolderPath", extract_dir);
-        octane_lua_api_instance["octane"]["project"]["load"](extract_dir + "\\octane\\item.ocs");
-    }
-    else if (octane_plug_utils::IsDirExist(extract_dir + "\\item.ocs"))
-    {
-        config_file_instance.Write("LastExtractFolderPath", extract_dir);
-        octane_lua_api_instance["octane"]["project"]["load"](extract_dir + "\\item.ocs");
-    }
-    else
-    {
-    // 弹出错误, 报告目录格式问题
-    }
-#endif
-#if 0
-    std::string extract_dir1 = std::get<0>(config_file_instance.Read("LastExtractFolderPath"));
-    //这个函数他妈的根本就是设计的失败,服务端的失败
-    octane_plug_utils::CreateAndMove(extract_dir1, "octane");
-    std::string zip_file_path = octane_plug_utils::compress_folder(extract_dir1, "item.zip");
-    if (zip_file_path.empty())
-    {
-    //报告错误
-    }
-    download_uploader_instance->UploadFileToOCS("846675380d4911e7b9fa00163e1284d1", "846675380d4911e7b9fa00163e1284d1/octane.zip", zip_file_path);
-#endif
     gui::MainWindow* main_window = new gui::MainWindow();
     main_window->ShowWindow();
 

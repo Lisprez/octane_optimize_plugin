@@ -11,6 +11,7 @@
 #include "modify_window.h"
 #include "test_image_window.h"
 #include "defer.h"
+#include "material_library.h"
 
 bool cancel_current_modify = false;
 bool give_up_work = false;
@@ -18,12 +19,19 @@ bool give_up_work = false;
 extern std::atomic<int> process_value;
 extern std::atomic<bool> work_finished;
 
-//void gui::MainWindow::ShowWindow()
 gui::MainWindow::MainWindow()
-    : download_uploader_(new download_upload::DownloadUploader())
+	: download_uploader_(new download_upload::DownloadUploader())
+	//, material_library_(new material::MaterialLibrary("C:\\Program Files\\OTOY\\OctaneRender Demo 2.25\\material_library"))
 {
-    octane_lua_api::OCtaneLuaAPI& octane_lua_api_instance = octane_lua_api::OCtaneLuaAPI::Get();
-    auto self = octane_lua_api_instance.Self();
+	std::string dll_path = octane_plug_utils::get_dll_path_from_itself();
+	std::string material_library_path = octane_plug_utils::get_parent_path(dll_path) + "\\material_library";
+	material_library_ = new material::MaterialLibrary(material_library_path);
+
+	octane_lua_api::OCtaneLuaAPI& octane_lua_api_instance = octane_lua_api::OCtaneLuaAPI::Get();
+	auto self = octane_lua_api_instance.Self();
+
+	//std::string MATERIAL_PATH{ "C:\\Program Files\\OTOY\\OctaneRender Demo 2.25\\material_library" };
+	//material_library_ = new material::MaterialLibrary(MATERIAL_PATH);
 
     self.create_named_table("file_editor", "attr", self.create_table_with(
         "type", self["octane"]["gui"]["componentType"]["TEXT_EDITOR"],
@@ -156,6 +164,7 @@ gui::MainWindow::MainWindow()
 gui::MainWindow::~MainWindow()
 {
     delete download_uploader_;
+	delete material_library_;
 }
 
 
@@ -265,12 +274,14 @@ void gui::MainWindow::download_button_callback(sol::object component, sol::objec
 		}
 		octane_plug_utils::insert_content_to_file(extract_dir + "\\octane\\item.ocs", 3, camera_location_discriptor);
         octane_lua_api_instance["octane"]["project"]["load"](extract_dir + "\\octane\\item.ocs");
+		material_library_->Load();
     }
     else if (octane_plug_utils::IsFileExists(extract_dir + "\\item.ocs"))
     {
         config_file_instance.Write("LastExtractFolderPath", extract_dir);
 		octane_plug_utils::insert_content_to_file(extract_dir + "\\octane\\item.ocs", 3, camera_location_discriptor);
         octane_lua_api_instance["octane"]["project"]["load"](extract_dir + "\\item.ocs");
+		material_library_->Load();
     }
     else
     {
@@ -287,6 +298,28 @@ void gui::MainWindow::upload_button_callback(sol::object component, sol::object 
     config_file::ConfigFile& config_file_instance = config_file::ConfigFile::Get();
     octane_lua_api::OCtaneLuaAPI& octane_lua_api_instance = octane_lua_api::OCtaneLuaAPI::Get();
     auto self = octane_lua_api_instance.Self();
+
+    auto model_no_wraper = config_file_instance.Read("model_no");
+	sol::table properties = octane_lua_api_instance["octane"]["gui"]["getProperties"](file_editor_instance_);
+	std::string model_no_raw = properties["text"].get<std::string>();
+	octane_plug_utils::trim(model_no_raw);
+	if (model_no_raw != std::get<0>(model_no_wraper))
+	{
+		octane_lua_api_instance["octane"]["gui"]["showError"]("download and upload with different model_no!", "model_no error");
+		self.create_named_table("upload_button", "status", self.create_table_with(
+			"enable", true));
+		octane_lua_api_instance["octane"]["gui"]["updateProperties"](upload_button_instance_, self["upload_button"]["status"]);
+		return;
+	}
+
+    if (!std::get<1>(model_no_wraper))
+    {
+        octane_lua_api_instance["octane"]["gui"]["showError"]("get model_no from config file error!", "compress error");
+        self.create_named_table("upload_button", "status", self.create_table_with(
+            "enable", true));
+        octane_lua_api_instance["octane"]["gui"]["updateProperties"](upload_button_instance_, self["download_button"]["status"]);
+        return;
+    }
 
     self.create_named_table("program_current_job", "attr", self.create_table_with(
         "text", "start saving works ..."));
@@ -382,15 +415,6 @@ void gui::MainWindow::upload_button_callback(sol::object component, sol::object 
     if (zip_file_path.empty())
     {
         octane_lua_api_instance["octane"]["gui"]["showError"]("compress files error", "compress error");
-        self.create_named_table("upload_button", "status", self.create_table_with(
-            "enable", true));
-        octane_lua_api_instance["octane"]["gui"]["updateProperties"](upload_button_instance_, self["download_button"]["status"]);
-        return;
-    }
-    auto model_no_wraper = config_file_instance.Read("model_no");
-    if (!std::get<1>(model_no_wraper))
-    {
-        octane_lua_api_instance["octane"]["gui"]["showError"]("get model_no from config file error!", "compress error");
         self.create_named_table("upload_button", "status", self.create_table_with(
             "enable", true));
         octane_lua_api_instance["octane"]["gui"]["updateProperties"](upload_button_instance_, self["download_button"]["status"]);

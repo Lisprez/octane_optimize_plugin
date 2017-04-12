@@ -193,6 +193,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)inc;%(AdditionalIncludeDirectories</AdditionalIncludeDirectories>
     </ClCompile>
     <ClCompile Include="src\main_window.cpp" />
+    <ClCompile Include="src\material_library.cpp" />
     <ClCompile Include="src\md5.cpp" />
     <ClCompile Include="src\messanger.cpp" />
     <ClCompile Include="src\modify_winidow.cpp" />
@@ -228,6 +229,7 @@
     <ClInclude Include="inc\luajit.h" />
     <ClInclude Include="inc\lualib.h" />
     <ClInclude Include="inc\main_window.h" />
+    <ClInclude Include="inc\material_library.h" />
     <ClInclude Include="inc\md5.h" />
     <ClInclude Include="inc\messanger.h" />
     <ClInclude Include="inc\modify_window.h" />
