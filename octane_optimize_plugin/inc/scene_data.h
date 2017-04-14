@@ -81,25 +81,29 @@ namespace scene_data {
 
 			std::string root_node = xml_handler_instance.InsertRootNode("OCS2/graph", "node", nullptr, root_node_attributes_xml);
 			// 获取root_node下面的所有属性结点并插入
-			std::vector<std::string> all_attribute_names{"objectLayerImport", "scaleUnitType",
-				"useSuppliedVertexNormals", "maxSmoothAngle", "defaultHairThickness",
-				"subdLevel", "subdLevel", "subdBoundInterp", "subdFaceVaryingBoundInterp",
-				"subdFaceVaryingPropagateCorners", "subdScheme", "windingOrder", "useSuppliedSmoothGroupsAsBoundaries",
-				"importMtlMaterials", "diffuse", "glossy", "specular", "importImageTextures", "textureDiffuse",
-				"textureDiffuseAsFloatImage", "textureSpecular", "textureSpecularAsFloatImage", "textureRoughness",
-				"textureRoughnessAsFloatImage", "textureBump", "textureBumpAsFloatImage", "textureBumpUseScale",
-				"textureOpacity", "textureOpacityAsFloatImage", "textureAutoAlphaImage", "glossySpecularScale",
-				"textureOpacityValueInvert", "textureOpacityInvert", "rgbColorSpaceId"
-			};
-			auto all_root_attribute_units = get_root_node_attributes_data(rootNodes[1], all_attribute_names);
-			for (const auto& root_attribute_unit : all_root_attribute_units)
+			// 纯材质没有
+			if (root_node_attributes_lua["type"].get<int>() == 1)
 			{
-				auto attribute_head = std::get<0>(root_attribute_unit);
-				auto pcdata = std::get<1>(root_attribute_unit);
-				xml_handler_instance.InsertAttributeNode(root_node, nullptr, attribute_head, pcdata);
+				std::vector<std::string> all_attribute_names{ "objectLayerImport","scaleUnitType",
+					"useSuppliedVertexNormals", "maxSmoothAngle", "defaultHairThickness",
+					"subdLevel", "subdLevel", "subdBoundInterp", "subdFaceVaryingBoundInterp",
+					"subdFaceVaryingPropagateCorners", "subdScheme", "windingOrder", "useSuppliedSmoothGroupsAsBoundaries",
+					"importMtlMaterials", "diffuse", "glossy", "specular", "importImageTextures", "textureDiffuse",
+					"textureDiffuseAsFloatImage", "textureSpecular", "textureSpecularAsFloatImage", "textureRoughness",
+					"textureRoughnessAsFloatImage", "textureBump", "textureBumpAsFloatImage", "textureBumpUseScale",
+					"textureOpacity", "textureOpacityAsFloatImage", "textureAutoAlphaImage", "glossySpecularScale",
+					"textureOpacityValueInvert", "textureOpacityInvert", "rgbColorSpaceId"
+				};
+				auto all_root_attribute_units = get_root_node_attributes_data(rootNodes[1], all_attribute_names);
+				for (const auto& root_attribute_unit : all_root_attribute_units)
+				{
+					auto attribute_head = std::get<0>(root_attribute_unit);
+					auto pcdata = std::get<1>(root_attribute_unit);
+					xml_handler_instance.InsertAttributeNode(root_node, nullptr, attribute_head, pcdata);
+				}
+				std::map<std::string, std::string> special_obj_attribute_node{ {"name", "filename"}, {"type", "11"} };
+				xml_handler_instance.InsertAttributeNode(root_node, nullptr, special_obj_attribute_node, "item.obj");
 			}
-            std::map<std::string, std::string> special_obj_attribute_node{{"name", "filename"}, {"type", "11"}};
-            xml_handler_instance.InsertAttributeNode(root_node, nullptr, special_obj_attribute_node, "item.obj");
 
 			//获取当前node的pin的数量
 			//遍历处理每一个pin, get_pin_node_data(pin)
